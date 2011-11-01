@@ -275,7 +275,9 @@ GLvoid check_gl_error() throw (FWException)
 	{
 		if(!isArbDebugOutputConfigured)
 		{
-			glDebugMessageCallbackARB(&_gl_debug_message_callback, NULL);
+			glDebugMessageCallbackARB(
+				reinterpret_cast<GLDEBUGPROCARB>(&_gl_debug_message_callback),
+				NULL );
 			isArbDebugOutputConfigured = true;
 		}
 	}

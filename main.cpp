@@ -3,7 +3,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-//#define _ANT_ENABLE
+#define _ANT_ENABLE
 
 // GL libraries
 #include "glew.hpp"
@@ -68,7 +68,6 @@ void on_clean()
 void on_update()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	std::cout << t.Ticks() << std::endl;
 
 #ifdef _ANT_ENABLE
 	TwDraw();

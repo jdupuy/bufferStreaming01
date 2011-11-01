@@ -1,7 +1,7 @@
 solution "TemplateGL"
 	configurations {
---	"Debug"
-	"Release"
+	"Debug"
+--	"Release"
 	}
 	platforms { "x64", "x32" }
 
@@ -13,7 +13,7 @@ solution "TemplateGL"
 		location "./"
 		kind "ConsoleApp" -- Shouldn't this be in configuration section ?
 		files { "*.hpp", "*.cpp" }
-		flags "Optimize"
+		flags "Symbols"
 		includedirs {
 		"include"
 		}
@@ -46,23 +46,23 @@ solution "TemplateGL"
 			"AntTweakBar"
 			}
 -- Visual x86
---		configuration {"Release", "vs*", "x32"}
---			libdirs {
---			"shared/lib/windows/win32"
---			}
---			links {
---			"glew32s",
---			"freeglut",
---			}
---			objdir "obj"
+		configuration {"vs2010", "x32"}
+			libdirs {
+			"lib/windows/win32"
+			}
+			links {
+			"glew32s",
+			"freeglut",
+			}
+			objdir "obj"
 ---- Visual x64
---		configuration {"Release", "vs*", "x64"}
+--		configuration {"vs2010", "x64"}
 --			links {
 --			"glew32s",
 --			"freeglut",
 --			}
 --			libdirs {
---			"shared/lib/windows/win64"
+--			"lib/windows/win64"
 --			}
 --			objdir "obj"
 
