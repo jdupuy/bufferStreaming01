@@ -11,14 +11,14 @@ solution "TemplateGL"
 		basedir "./"
 		language "C++"
 		location "./"
-		kind "ConsoleApp" -- Shouldn't this be in configuration section ?
+		kind "ConsoleApp"
 		files { "*.hpp", "*.cpp" }
 		flags "Symbols"
 		includedirs {
 		"include"
 		}
 		objdir "obj"
--- Linux x86 platform gmake
+-- Linux x86
 		configuration {"linux", "gmake", "x32"}
 			linkoptions {
 			"-Wl,-rpath -Wl,./lib/linux/lin32",
@@ -31,8 +31,8 @@ solution "TemplateGL"
 			"glut",
 			"AntTweakBar"
 			}
-			
--- Linux x64 platform gmake
+
+-- Linux x64
 		configuration {"linux", "gmake", "x64"}
 			linkoptions {
 			"-Wl,-rpath -Wl,./lib/linux/lin64"
@@ -45,6 +45,7 @@ solution "TemplateGL"
 			"glut",
 			"AntTweakBar"
 			}
+
 -- Visual x86
 		configuration {"vs2010", "x32"}
 			libdirs {
@@ -55,6 +56,7 @@ solution "TemplateGL"
 			"freeglut",
 			}
 			objdir "obj"
+
 ---- Visual x64
 --		configuration {"vs2010", "x64"}
 --			links {

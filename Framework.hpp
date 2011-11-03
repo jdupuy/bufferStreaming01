@@ -25,18 +25,31 @@ namespace fw
 		std::string mMessage;
 	};
 
+
 	// Get next power of two
 	GLuint next_power_of_two(GLuint number);
 
+
 	// Build GLSL program
-	GLvoid buid_glsl_program( GLuint program, 
-	                          const std::string& srcfile,
-	                          const std::string& options,
-	                          GLboolean link ) throw(FWException);
+	GLvoid build_glsl_program( GLuint program, 
+	                           const std::string& srcfile,
+	                           const std::string& options,
+	                           GLboolean link ) throw(FWException);
+
 
 	// Check OpenGL errors (uses ARB_debug_output if available)
 	// (throws an exception if an error is detected)
 	GLvoid check_gl_error() throw (FWException);
+
+
+//	// Save a portion of the OpenGL front buffer (= take a screenshot)
+//	// File will be a TGA in BGR format, uncompressed.
+//	// The OpenGL state is restored the way it was before this function call.
+//	GLvoid save_gl_front_buffer( GLsizei x,
+//	                             GLsizei y,
+//	                             GLsizei width,
+//	                             GLsizei height) throw(FWException);
+
 
 	// Basic timer class
 	class Timer
@@ -57,6 +70,68 @@ namespace fw
 		double mStartTicks;
 		double mStopTicks;
 		bool   mIsTicking;
+	};
+
+
+	// Tga image loader/saver
+	class Tga
+	{
+	public:
+		// Constants
+		enum
+		{
+			PIXEL_FORMAT_UNKNOWN=0,
+			PIXEL_FORMAT_LUMINANCE,
+			PIXEL_FORMAT_LUMINANCE_ALPHA,
+			PIXEL_FORMAT_BGR,
+			PIXEL_FORMAT_BGRA,
+		};
+
+		// Constructors / Destructor
+		Tga();
+			// see LoadFromFile
+		explicit Tga(const std::string& filename) throw(FWException);
+//			// see LoadFromGLBuffer
+//		Tga( GLushort width,
+//		     GLushort height,
+//		     GLint format,
+//		     GLubyte* pixels)  throw(FWException);
+		~Tga();
+
+		// Manipulation
+			// load from a tga file
+		void Load(const std::string& filename) throw(FWException);
+			// save to a file (tga is automatically added)
+//		void Save(const std::string& filename)         throw(FWException);
+
+		// Queries
+		GLushort Width()       const;
+		GLushort Height()      const;
+		GLint    PixelFormat() const;
+		GLubyte* Pixels()      const; // never call delete on this!
+
+	private:
+		// Non copyable
+		Tga(const Tga& tga);
+		Tga& operator=(const Tga& tga);
+
+		// Internal manipulation
+		void _Flip();
+		void _LoadColourMapped(std::ifstream&, GLchar*)    throw(FWException);
+		void _LoadLuminance(std::ifstream&, GLchar*)       throw(FWException);
+		void _LoadUnmapped(std::ifstream&, GLchar*)        throw(FWException);
+		void _LoadUnmappedRle(std::ifstream&, GLchar*)     throw(FWException);
+		void _LoadColourMappedRle(std::ifstream&, GLchar*) throw(FWException);
+		void _LoadLuminanceRle(std::ifstream&, GLchar*)    throw(FWException);
+//		void _SaveUnmapped(std::ofstream&);
+//		void _SaveLuminance(std::ofstream&);
+		void _Clear();
+
+		// Members
+		GLubyte* mPixels;
+		GLushort mWidth;
+		GLushort mHeight;
+		GLint    mPixelFormat;
 	};
 
 } // namespace fw

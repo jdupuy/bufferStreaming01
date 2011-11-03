@@ -15,6 +15,7 @@
 #   define M_PI 3.14159265358979323846
 #endif
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Type declarations
 template <typename T>   class vec3;
@@ -1291,6 +1292,5 @@ mat4<T> ortho(const T& left, const T& right, const T& bottom, const T& top, cons
                    0, 0, m22, tz,
                    0, 0,   0,  1 );
 }
-
 
 #endif // __G_MATH__
