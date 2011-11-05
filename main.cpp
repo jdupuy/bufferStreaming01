@@ -115,8 +115,12 @@ void on_init()
 	fw::Tga tga("knight.tga");
 	glActiveTexture(GL_TEXTURE0+TEXTURE_SKIN_MD2);
 	glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_SKIN_MD2]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri( GL_TEXTURE_2D,
+		                 GL_TEXTURE_MAG_FILTER,
+		                 GL_LINEAR );
+		glTexParameteri( GL_TEXTURE_2D,
+		                 GL_TEXTURE_MIN_FILTER,
+		                 GL_LINEAR_MIPMAP_LINEAR );
 	if(tga.PixelFormat() == fw::Tga::PIXEL_FORMAT_LUMINANCE)
 		glTexImage2D( GL_TEXTURE_2D,
 		              0,
@@ -158,6 +162,7 @@ void on_init()
 		              GL_UNSIGNED_BYTE,
 		              tga.Pixels() );
 	glGenerateMipmap(GL_TEXTURE_2D);
+
 
 	// configure buffer objects
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
@@ -387,6 +392,12 @@ void on_key_down(GLubyte key, GLint x, GLint y)
 		glutLeaveMainLoop();
 	if(key=='f')
 		glutFullScreenToggle();
+	if(key=='p')
+		fw::save_gl_front_buffer(0,
+		                         0,
+		                         glutGet(GLUT_WINDOW_WIDTH),
+		                         glutGet(GLUT_WINDOW_HEIGHT));
+
 }
 
 

@@ -34,7 +34,7 @@ void main()
 	vec3 N = normalize(iNormal);
 	vec3 L = normalize(vec3(1.0));
 	oColor = max(0.0, dot(N, L))*texture(sSkin, iTexCoord);
-	oColor = max(1.0, dot(N, L))*texture(sSkin, iTexCoord);
+//	oColor.rgb = abs(N);
 }
 
 #endif // _FRAGMENT_

@@ -338,6 +338,7 @@ Md2::~Md2() throw()
 	_Clear();
 }
 
+#include <iostream>
 ////////////////////////////////////////////////////////////////////////////////
 // Load from file
 void Md2::Load(const std::string& filename) throw (Md2Exception)
@@ -398,7 +399,7 @@ void Md2::Load(const std::string& filename) throw (Md2Exception)
 	}
 	else
 		throw _BadTriangleDataException(filename);
-	if(0<mFrameCnt && 200>mFrameCnt)
+	if(198==mFrameCnt)
 		mFrames = new _Frame[mFrameCnt];
 	else
 		throw _BadFrameDataException(filename);
@@ -422,6 +423,7 @@ void Md2::Load(const std::string& filename) throw (Md2Exception)
 		fileStream.read(   reinterpret_cast<char*>(mFrames[i].vertices),
 		                    sizeof(Md2::_Frame::Vertex)*mVertexCnt);
 	}
+
 
 	// done
 	fileStream.close();
@@ -555,7 +557,7 @@ void Md2::GenVertices(Md2::Vertex* vertices) const
 
 			// compute texture coords
 			vertices[index].st[0] = float(texCoord->s) / mSkinWidth;
-			vertices[index].st[1] = 1.0f-float(texCoord->t) / mSkinHeight;
+			vertices[index].st[1] = 1.0f - float(texCoord->t) / mSkinHeight;
 		}
 }
 
@@ -568,12 +570,7 @@ const int16_t Md2::FrameCount()     const {return mFrameCnt;}
 const int16_t Md2::VertexCount()    const {return mVertexCnt;}
 const int16_t Md2::SkinWidth()      const {return mSkinWidth;}
 const int16_t Md2::SkinHeight()     const {return mSkinHeight;}
-//Md2::AnimationName Md2::ActiveAnimationName()   const
-//{return reinterpret_cast<int16_t>(mActiveAnimation);}
-//std::string Md2::ActiveFrameNameStr()      const 
-//{return mFrames[mActiveFrame].name;}
-//std::string Md2::ActiveAnimationNameStr()  const 
-//{return mAnimations[mActiveAnimation].name;}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Clean

@@ -91,7 +91,6 @@ public:
 	void NextAnimation();       // play next animation
 	void PreviousAnimation();   // play previous animation
 	void Update(float dt);      // update the animation sequence
-//	void SetAnimation(AnimationName name);
 
 	// Stream data
 	void GenVertices(Vertex* vertices)        const; // allocated memory
@@ -104,9 +103,6 @@ public:
 	const int16_t FrameCount()     const;
 	const int16_t SkinWidth()      const;
 	const int16_t SkinHeight()     const;
-	AnimationName ActiveAnimationName()   const;
-	std::string ActiveFrameNameStr()      const;
-	std::string ActiveAnimationNameStr()  const;
 
 private:
 	// Non copyable

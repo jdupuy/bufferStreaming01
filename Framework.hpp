@@ -39,16 +39,16 @@ namespace fw
 
 	// Check OpenGL errors (uses ARB_debug_output if available)
 	// (throws an exception if an error is detected)
-	GLvoid check_gl_error() throw (FWException);
+	GLvoid check_gl_error() throw(FWException);
 
 
-//	// Save a portion of the OpenGL front buffer (= take a screenshot)
-//	// File will be a TGA in BGR format, uncompressed.
-//	// The OpenGL state is restored the way it was before this function call.
-//	GLvoid save_gl_front_buffer( GLsizei x,
-//	                             GLsizei y,
-//	                             GLsizei width,
-//	                             GLsizei height) throw(FWException);
+	// Save a portion of the OpenGL front buffer (= take a screenshot)
+	// File will be a TGA in BGR format, uncompressed.
+	// The OpenGL state is restored the way it was before this function call.
+	GLvoid save_gl_front_buffer( GLint x,
+	                             GLint y,
+	                             GLsizei width,
+	                             GLsizei height) throw(FWException);
 
 
 	// Basic timer class
@@ -73,7 +73,7 @@ namespace fw
 	};
 
 
-	// Tga image loader/saver
+	// Tga image loader
 	class Tga
 	{
 	public:
@@ -84,31 +84,24 @@ namespace fw
 			PIXEL_FORMAT_LUMINANCE,
 			PIXEL_FORMAT_LUMINANCE_ALPHA,
 			PIXEL_FORMAT_BGR,
-			PIXEL_FORMAT_BGRA,
+			PIXEL_FORMAT_BGRA
 		};
 
 		// Constructors / Destructor
 		Tga();
-			// see LoadFromFile
+			// see Load
 		explicit Tga(const std::string& filename) throw(FWException);
-//			// see LoadFromGLBuffer
-//		Tga( GLushort width,
-//		     GLushort height,
-//		     GLint format,
-//		     GLubyte* pixels)  throw(FWException);
 		~Tga();
 
 		// Manipulation
 			// load from a tga file
 		void Load(const std::string& filename) throw(FWException);
-			// save to a file (tga is automatically added)
-//		void Save(const std::string& filename)         throw(FWException);
 
 		// Queries
 		GLushort Width()       const;
 		GLushort Height()      const;
 		GLint    PixelFormat() const;
-		GLubyte* Pixels()      const; // never call delete on this!
+		GLubyte* Pixels()      const; // data must be used as read only
 
 	private:
 		// Non copyable
@@ -123,8 +116,6 @@ namespace fw
 		void _LoadUnmappedRle(std::ifstream&, GLchar*)     throw(FWException);
 		void _LoadColourMappedRle(std::ifstream&, GLchar*) throw(FWException);
 		void _LoadLuminanceRle(std::ifstream&, GLchar*)    throw(FWException);
-//		void _SaveUnmapped(std::ofstream&);
-//		void _SaveLuminance(std::ofstream&);
 		void _Clear();
 
 		// Members

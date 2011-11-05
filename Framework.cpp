@@ -2,6 +2,7 @@
 #include <fstream> // std::ifstream
 #include <climits> // CHAR_BIT
 #include <cstring> // memcpy
+#include <sstream> // std::stringstream
 
 #ifdef _WIN32
 #	include <windows.h>
@@ -70,14 +71,14 @@ public:
 	}
 };
 
-//class _InvalidViewportException : public FWException
-//{
-//public:
-//	_InvalidViewportException()
-//	{
-//		mMessage = "Can not save requested viewport.";
-//	}
-//};
+class _InvalidViewportDimensionsException : public FWException
+{
+public:
+	_InvalidViewportDimensionsException()
+	{
+		mMessage = "Invalid viewport dimensions.";
+	}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Local functions
@@ -178,6 +179,7 @@ static GLvoid _gl_debug_message_callback( GLenum source,
 {
 	throw _GLErrorException(message);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions implementation
@@ -314,41 +316,108 @@ GLvoid check_gl_error() throw (FWException)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Take a screen shot
-//GLvoid save_viewport(GLint x, GLint y, GLsizei mWidth, GLsizei mHeight) throw (FWException)
-//{
-//	static GLuint sShotCounter = 0;
-//	GLubyte *pixelData = NULL;
+GLvoid save_gl_front_buffer( GLint x,
+	                         GLint y,
+	                         GLsizei width,
+	                         GLsizei height) throw(FWException)
+{
+	static GLuint sShotCounter = 1;
+	GLubyte *tgaPixels = NULL;
+	GLint tgaWidth, tgaHeight;
+	GLint pixelPackBufferBinding,
+	      readBuffer,
+	      packSwapBytes, packLsbFirst, packRowLength, packImageHeight,
+	      packSkipRows, packSkipPixels, packSkipImages, packAlignment;
 
-//	// check values
-//	if(x>=mWidth || y>=mHeight || x<0 || y<0 || mWidth<0 || mHeight<0)
-//		throw _InvalidViewportException();
+	// check values
+	if(x>=width || y>=height || x<0 || y<0)
+		throw _InvalidViewportDimensionsException();
 
-//	// save GL state
-//	GLint pixelPackBufferBinding = 0;
-//	GLint readBuffer = 0;
-//	glGetIntergerv(GL_PIXEL_PACK_BUFFER_BINDING, &pixelPackBufferBinding);
-//	glGetIntergerv(GL_READ_BUFFER, &readBuffer);
+	// compute final tga dimensions
+	tgaWidth  = width  - x;
+	tgaHeight = height - y;
 
+	// save GL state
+	glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &pixelPackBufferBinding);
+	glGetIntegerv(GL_READ_BUFFER, &readBuffer);
+	glGetIntegerv(GL_PACK_SWAP_BYTES, &packSwapBytes);
+	glGetIntegerv(GL_PACK_LSB_FIRST, &packLsbFirst);
+	glGetIntegerv(GL_PACK_ROW_LENGTH, &packRowLength);
+	glGetIntegerv(GL_PACK_IMAGE_HEIGHT, &packImageHeight);
+	glGetIntegerv(GL_PACK_SKIP_ROWS, &packSkipRows);
+	glGetIntegerv(GL_PACK_SKIP_PIXELS, &packSkipPixels);
+	glGetIntegerv(GL_PACK_SKIP_IMAGES, &packSkipImages);
+	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
 
-//	// allocate data and read mPixels frome framebuffer
-//	pixelData = new GLubyte[mWidth*mHeight*3];
-//	glReadBuffer(GL_FRONT);
-//	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-//	glReadPixels(x,y,mWidth,mHeight,GL_BGR,GL_UNSIGNED_BYTE,pixelData);
+	// allocate data and read mPixels frome framebuffer
+	tgaPixels = new GLubyte[tgaWidth*tgaHeight*3];
+	glReadBuffer(GL_FRONT);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+	glPixelStorei(GL_PACK_SWAP_BYTES, 0);
+	glPixelStorei(GL_PACK_LSB_FIRST, 0);
+	glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+	glPixelStorei(GL_PACK_IMAGE_HEIGHT, 0);
+	glPixelStorei(GL_PACK_SKIP_ROWS, 0);
+	glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
+	glPixelStorei(GL_PACK_SKIP_IMAGES, 0);
+	glPixelStorei(GL_PACK_ALIGNMENT, 4);
+	glReadPixels(x, y, width, height, GL_BGR, GL_UNSIGNED_BYTE, tgaPixels);
 
-//	// compute new filename
-//	std::stringstream ss;
-//	std::string filename;
-//	ss << "screenshot" << sShotCounter;
-//	filename = ss.str();
+	// compute new filename
+	std::stringstream ss;
+	ss << "screenshot";
+	if(sShotCounter < 10)
+		ss << '0';
+	if(sShotCounter < 100)
+		ss << '0';
+	ss << sShotCounter << ".tga";
 
-//	// create new tga
-//	Tga tga(mWidth, mHeight, Tga::PIXEL_FORMAT_BGR, pixelData);
-//	delete[] pixelData;
-//	tga.Save(filename);
+	// open file
+	std::ofstream fileStream( ss.str().c_str(),
+	                          std::ifstream::out | std::ifstream::binary );
+	// check opening
+	if(!fileStream)
+		throw _FileNotFoundException(ss.str().c_str());
 
-//	// Restor GL state
-//}
+	// create header
+	GLchar tgaHeader[18]=
+	{
+		0,                                     // image identification field
+		0,                                     // colormap type
+		2,                                     // image type code
+		0,0,0,0,0,                             // color map spec (ignored here)
+		0,0,                                   // x origin of image
+		0,0,                                   // y origin of image
+		tgaWidth & 255,  tgaWidth >> 8 & 255,  // width of the image
+		tgaHeight & 255, tgaHeight >> 8 & 255, // height of the image
+		24,                                    // bits per pixel
+		0                                      // image descriptor byte
+	};
+
+	// write header and pixel data
+	fileStream.write(tgaHeader, 18);
+	fileStream.write(reinterpret_cast<const GLchar*>(tgaPixels),
+	                 tgaWidth*tgaHeight*3);
+	fileStream.close();
+
+	// restore GL state
+	glReadBuffer(readBuffer);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, pixelPackBufferBinding);
+	glPixelStorei(GL_PACK_SWAP_BYTES, packSwapBytes);
+	glPixelStorei(GL_PACK_LSB_FIRST, packLsbFirst);
+	glPixelStorei(GL_PACK_ROW_LENGTH, packRowLength);
+	glPixelStorei(GL_PACK_IMAGE_HEIGHT, packImageHeight);
+	glPixelStorei(GL_PACK_SKIP_ROWS, packSkipRows);
+	glPixelStorei(GL_PACK_SKIP_PIXELS, packSkipPixels);
+	glPixelStorei(GL_PACK_SKIP_IMAGES, packSkipImages);
+	glPixelStorei(GL_PACK_ALIGNMENT, packAlignment);
+
+	// free memory
+	delete[] tgaPixels;
+
+	// increment screenshot counter
+	++sShotCounter;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -460,6 +529,7 @@ public:
 		mMessage = "Invalid TGA image descriptor byte.";
 	}
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tga implementation
@@ -614,16 +684,17 @@ void Tga::_LoadUnmapped( std::ifstream& fileStream,
 		for(GLuint i=0; i<maxIter; ++i)
 		{
 			fileStream.read(reinterpret_cast<GLchar*>(&rgb16), 2);
-			mPixels[i*3]     = static_cast<GLubyte>((rgb16 & 0x001F) << 3);
-			mPixels[i*3+1]   = static_cast<GLubyte>(((rgb16 & 0x03E0) >> 5) << 3);
-			mPixels[i*3+2]   = static_cast<GLubyte>(((rgb16 & 0x7C00) >> 10) << 3);
+			mPixels[i*3]     = static_cast<GLubyte>((rgb16 & 0x001F)<<3);
+			mPixels[i*3+1]   = static_cast<GLubyte>(((rgb16 & 0x03E0)>>5)<<3);
+			mPixels[i*3+2]   = static_cast<GLubyte>(((rgb16 & 0x7C00)>>10)<<3);
 		}
 	}
 	else if(header[16]==24 || header[16]==32)
 	{
 		mPixelFormat = header[16] >> 3;
 		mPixels      = new GLubyte[mWidth*mHeight*mPixelFormat];
-		fileStream.read(reinterpret_cast<GLchar*>(mPixels), mWidth*mHeight*mPixelFormat);
+		fileStream.read( reinterpret_cast<GLchar*>(mPixels),
+		                 mWidth*mHeight*mPixelFormat );
 	}
 	else
 		throw _TgaInvalidBppValueException();
@@ -711,7 +782,10 @@ void Tga::_LoadUnmappedRle( std::ifstream& fileStream,
 					memcpy(dataPtr+blockIter*mPixelFormat, dataPtr, mPixelFormat);
 			else
 				for(; blockIter<blockSize; ++blockIter)
-					fileStream.read(reinterpret_cast<GLchar*>(dataPtr+blockIter*mPixelFormat), mPixelFormat);
+					fileStream.read(reinterpret_cast<GLchar*>(dataPtr
+					                                         +blockIter
+					                                         *mPixelFormat),
+					                mPixelFormat);
 			// increment pixel ptr
 			dataPtr+=mPixelFormat*blockSize;
 		}
@@ -802,7 +876,8 @@ void Tga::_LoadColourMappedRle( std::ifstream& fileStream,
 		else // raw
 			for(; blockIter<blockSize; ++blockIter)
 			{
-				fileStream.read(reinterpret_cast<GLchar*>(&index), bytesPerIndex);
+				fileStream.read(reinterpret_cast<GLchar*>(&index),
+				                bytesPerIndex);
 				memcpy( dataPtr+blockIter*mPixelFormat,
 				        &colourMap[index*mPixelFormat], 
 				        mPixelFormat );
@@ -853,10 +928,15 @@ void Tga::_LoadLuminanceRle( std::ifstream& fileStream,
 			fileStream.read(reinterpret_cast<GLchar*>(dataPtr), mPixelFormat);
 			if(packetHeader & 0x80u)   // rle
 				for(; blockIter<blockSize; ++blockIter)
-					memcpy(dataPtr+blockIter*mPixelFormat, dataPtr, mPixelFormat);
+					memcpy( dataPtr+blockIter*mPixelFormat,
+					        dataPtr,
+					        mPixelFormat );
 			else
 				for(; blockIter<blockSize; ++blockIter)
-					fileStream.read(reinterpret_cast<GLchar*>(dataPtr+blockIter*mPixelFormat), mPixelFormat);
+					fileStream.read( reinterpret_cast<GLchar*>(dataPtr
+					                                          +blockIter
+					                                          *mPixelFormat),
+					                 mPixelFormat );
 			// increment pixel ptr
 			dataPtr+=mPixelFormat*blockSize;
 		}
@@ -872,7 +952,7 @@ void Tga::_LoadLuminanceRle( std::ifstream& fileStream,
 
 ////////////////////////////////////////////////////////////////////////////////
 // Default constructor
-Tga::Tga() : 
+Tga::Tga(): 
 mPixels(NULL),
 mWidth(0), mHeight(0),
 mPixelFormat(PIXEL_FORMAT_UNKNOWN)
@@ -882,7 +962,7 @@ mPixelFormat(PIXEL_FORMAT_UNKNOWN)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Overloaded constructor
-Tga::Tga(const std::string& filename) throw(FWException): 
+Tga::Tga(const std::string& filename) throw(FWException):
 mPixels(NULL),
 mWidth(0), mHeight(0),
 mPixelFormat(PIXEL_FORMAT_UNKNOWN)
@@ -952,6 +1032,42 @@ void Tga::Load(const std::string& filename) throw(FWException)
 
 	fileStream.close();
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//// Save to file
+//void Tga::Save(const std::string& filename) throw(FWException)
+//{
+//	std::ofstream fileStream( filename.c_str(),
+//	                          std::ifstream::out | std::ifstream::binary );
+
+//	if(!fileStream)
+//		throw _TgaLoaderException(filename, "Could not open file.");
+
+//	if(NULL == mPixels)
+//		throw _TgaLoaderException(filename, "No pixel data in object.");
+
+//	// build header
+//	const GLchar header[18]=
+//	{
+//		0,                                 // image identification field
+//		0,                                 // colormap type
+//		mPixelFormat < 3 ? 3 : 2,          // image type code
+//		0,0,0,0,0,                         // color map spec (ignored here)
+//		0,0,                               // x origin of image
+//		0,0,                               // y origin of image
+//		mWidth & 255,  mWidth >> 8 & 255,  // width of the image
+//		mHeight & 255, mHeight >> 8 & 255, // height of the image
+//		mPixelFormat << 3,                 // bits per pixel
+//		0                                  // image descriptor byte
+//	};
+
+//	// emit header, and pixel images
+//	fileStream.write(header, 18);
+//	fileStream.write(reinterpret_cast<const GLchar*>(mPixels),
+//	                 mWidth*mHeight*mPixelFormat);
+//	fileStream.close();
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
