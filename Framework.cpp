@@ -122,7 +122,7 @@ static void _attach_shader( GLuint program,
                             GLenum shaderType,
                             const GLchar* stringsrc) throw(FWException)
 {
-	const GLchar** string =  &stringsrc;
+	const GLchar** string = &stringsrc;
 	GLuint shader = glCreateShader(shaderType);
 	glShaderSource(shader, 1, string, NULL);
 	glCompileShader(shader);
@@ -349,8 +349,7 @@ GLvoid save_gl_front_buffer( GLint x,
 	glGetIntegerv(GL_PACK_SKIP_IMAGES, &packSkipImages);
 	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
 
-	// allocate data and read mPixels frome framebuffer
-	tgaPixels = new GLubyte[tgaWidth*tgaHeight*3];
+	// push gl state
 	glReadBuffer(GL_FRONT);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 	glPixelStorei(GL_PACK_SWAP_BYTES, 0);
@@ -361,6 +360,9 @@ GLvoid save_gl_front_buffer( GLint x,
 	glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
 	glPixelStorei(GL_PACK_SKIP_IMAGES, 0);
 	glPixelStorei(GL_PACK_ALIGNMENT, 4);
+
+	// allocate data and read mPixels frome framebuffer
+	tgaPixels = new GLubyte[tgaWidth*tgaHeight*3];
 	glReadPixels(x, y, width, height, GL_BGR, GL_UNSIGNED_BYTE, tgaPixels);
 
 	// compute new filename

@@ -101,7 +101,7 @@ namespace fw
 		GLushort Width()       const;
 		GLushort Height()      const;
 		GLint    PixelFormat() const;
-		GLubyte* Pixels()      const; // data must be used as read only
+		GLubyte* Pixels()      const; // data must be used for read only
 
 	private:
 		// Non copyable
