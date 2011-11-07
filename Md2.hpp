@@ -103,6 +103,7 @@ public:
 	const int16_t FrameCount()     const;
 	const int16_t SkinWidth()      const;
 	const int16_t SkinHeight()     const;
+	bool IsPlaying()               const;
 
 private:
 	// Non copyable

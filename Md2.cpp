@@ -570,7 +570,7 @@ const int16_t Md2::FrameCount()     const {return mFrameCnt;}
 const int16_t Md2::VertexCount()    const {return mVertexCnt;}
 const int16_t Md2::SkinWidth()      const {return mSkinWidth;}
 const int16_t Md2::SkinHeight()     const {return mSkinHeight;}
-
+bool Md2::IsPlaying() const {return mIsPlaying;}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Clean

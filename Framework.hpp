@@ -42,7 +42,7 @@ namespace fw
 	GLvoid check_gl_error() throw(FWException);
 
 
-	// Save a portion of the OpenGL front buffer (= take a screenshot)
+	// Save a portion of the OpenGL front buffer (= take a screenshot).
 	// File will be a TGA in BGR format, uncompressed.
 	// The OpenGL state is restored the way it was before this function call.
 	GLvoid save_gl_front_buffer( GLint x,

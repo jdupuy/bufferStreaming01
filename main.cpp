@@ -15,9 +15,9 @@
 #endif // _ANT_ENABLE
 
 // Custom libraries
-#include "Framework.hpp"    // utility classes/functions
 #include "gmath.hpp"        // basic math library
-#include "Md2.hpp"
+#include "Framework.hpp"    // utility classes/functions
+#include "Md2.hpp"          // MD2 model loader/player
 
 // Standard librabries
 #include <iostream>
@@ -85,6 +85,14 @@ static void TW_CALL toggle_fullscreen(void *data)
 {
 	// toggle fullscreen
 	glutFullScreenToggle();
+}
+
+static void TW_CALL play_pause(void* data)
+{
+	if(md2->IsPlaying())
+		md2->Pause();
+	else
+		md2->Play();
 }
 
 #endif
@@ -166,7 +174,10 @@ void on_init()
 
 	// configure buffer objects
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
-		glBufferData(GL_ARRAY_BUFFER, STREAM_BUFFER_CAPACITY, NULL, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, 
+		             STREAM_BUFFER_CAPACITY,
+		             NULL,
+		             GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// configure vertex arrays
@@ -184,7 +195,10 @@ void on_init()
 	glBindVertexArray(0);
 
 	// configure programs
-	fw::build_glsl_program(programs[PROGRAM_RENDER_MD2], "md2.glsl", "", GL_TRUE);
+	fw::build_glsl_program(programs[PROGRAM_RENDER_MD2],
+	                       "md2.glsl",
+	                       "",
+	                       GL_TRUE);
 	glProgramUniform1i( programs[PROGRAM_RENDER_MD2], 
 	                    glGetUniformLocation( programs[PROGRAM_RENDER_MD2], 
 	                                          "sSkin"),
@@ -201,7 +215,7 @@ void on_init()
 
 	// Create a new bar
 	TwBar* menuBar = TwNewBar("menu");
-	TwDefine("menu size='250 100'");
+	TwDefine("menu size='250 150'");
 	TwAddButton( menuBar,
 	             "fullscreen",
 	             &toggle_fullscreen,
@@ -212,6 +226,11 @@ void on_init()
 	             &play_next_animation,
 	             NULL,
 	             "label='next animation'");
+	TwAddButton( menuBar,
+	             "playPause",
+	             &play_pause,
+	             NULL,
+	             "label='play/pause animation'");
 	TwAddVarRO( menuBar,
 	            "speed",
 	            TW_TYPE_DOUBLE,
@@ -267,6 +286,12 @@ void on_update()
 	// stop the timer during update
 	deltaTimer.Stop();
 
+	// set viewport
+	glViewport(0,0,windowWidth, windowHeight);
+
+	// clear back buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	// update md2 animation
 	md2->Update(deltaTimer.Ticks());
 
@@ -277,46 +302,55 @@ void on_update()
 	// Compute fps
 	framesPerSecond = 1.0/deltaTimer.Ticks();
 #endif // _ANT_ENABLE
-	// stream vertices
+	// stream vertices (if necessary)
 	static GLuint streamOffset = 0;
-	// bind the buffer
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
-	// orphan if full
-	GLuint streamDataSize = fw::next_power_of_two(md2->TriangleCount()*3*sizeof(Md2::Vertex));
-	if(streamOffset + streamDataSize > STREAM_BUFFER_CAPACITY)
-	{
-		// allocate new space and reset the vao
-		glBufferData( GL_ARRAY_BUFFER,
-		              STREAM_BUFFER_CAPACITY,
-		              NULL,
-		              GL_STREAM_DRAW );
-		glBindVertexArray(vertexArrays[VERTEX_ARRAY_MD2]);
-			glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
-			glVertexAttribPointer( 0, 3, GL_FLOAT, 0, sizeof(Md2::Vertex),
-				                   FW_BUFFER_OFFSET(0) );
-			glVertexAttribPointer( 1, 3, GL_FLOAT, 0, sizeof(Md2::Vertex),
-				                   FW_BUFFER_OFFSET(3*sizeof(GLfloat)));
-			glVertexAttribPointer( 2, 2, GL_FLOAT, 0, sizeof(Md2::Vertex),
-				                   FW_BUFFER_OFFSET(6*sizeof(GLfloat)));
-		glBindVertexArray(0);
-		// reset offset
-		streamOffset = 0;
-	}
+	GLuint drawOffset = streamOffset/sizeof(Md2::Vertex);
+//	if(md2->IsPlaying())
+//	{
+		// bind the buffer
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
+		// orphan if full
+		GLuint streamDataSize = fw::next_power_of_two(md2->TriangleCount()
+		                                              *3*sizeof(Md2::Vertex));
+		if(streamOffset + streamDataSize > STREAM_BUFFER_CAPACITY)
+		{
+			// allocate new space and reset the vao
+			glBufferData( GL_ARRAY_BUFFER,
+			              STREAM_BUFFER_CAPACITY,
+			              NULL,
+			              GL_STREAM_DRAW );
+			glBindVertexArray(vertexArrays[VERTEX_ARRAY_MD2]);
+				glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
+				glVertexAttribPointer( 0, 3, GL_FLOAT, 0, sizeof(Md2::Vertex),
+				                       FW_BUFFER_OFFSET(0) );
+				glVertexAttribPointer( 1, 3, GL_FLOAT, 0, sizeof(Md2::Vertex),
+				                       FW_BUFFER_OFFSET(3*sizeof(GLfloat)));
+				glVertexAttribPointer( 2, 2, GL_FLOAT, 0, sizeof(Md2::Vertex),
+				                       FW_BUFFER_OFFSET(6*sizeof(GLfloat)));
+			glBindVertexArray(0);
+			// reset offsets
+			streamOffset = 0;
+			drawOffset = 0;
+		}
 
-	// get memory asynchronously AND safely
-	Md2::Vertex* vertices = (Md2::Vertex*)
-	                        (glMapBufferRange( GL_ARRAY_BUFFER, 
-	                                           streamOffset, 
-	                                           streamDataSize, 
-	                                           GL_MAP_WRITE_BIT
-	                                           |GL_MAP_UNSYNCHRONIZED_BIT ));
+		// get memory safely
+		Md2::Vertex* vertices = (Md2::Vertex*)
+		                        (glMapBufferRange(GL_ARRAY_BUFFER, 
+		                                          streamOffset, 
+		                                          streamDataSize, 
+		                                          GL_MAP_WRITE_BIT
+		                                          |GL_MAP_UNSYNCHRONIZED_BIT));
 
-	// set final data
-	md2->GenVertices(vertices);
+		// set final data
+		md2->GenVertices(vertices);
 
-	// unmap buffer
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+		// unmap buffer
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// increment offset
+		streamOffset += streamDataSize;
+//	}
 
 #ifdef _ANT_ENABLE
 	// End bench
@@ -324,12 +358,6 @@ void on_update()
 	streamingTime = streamTimer.Ticks()*1000.0; // convert to milliseconds
 #endif // _ANT_ENABLE
 
-
-	// set viewport
-	glViewport(0,0,windowWidth, windowHeight);
-
-	// clear back buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// render the model
 	glUseProgram(programs[PROGRAM_RENDER_MD2]);
@@ -355,9 +383,10 @@ void on_update()
 
 	glBindVertexArray(vertexArrays[VERTEX_ARRAY_MD2]);
 	glDrawArrays( GL_TRIANGLES,
-	              streamOffset/sizeof(Md2::Vertex),
+	              drawOffset,
 	              md2->TriangleCount()*3);
 
+	// back to default vertex array
 	glBindVertexArray(0);
 
 #ifdef _ANT_ENABLE
@@ -467,7 +496,7 @@ int main(int argc, char** argv)
 		std::stringstream ss;
 		ss << err;
 		std::cerr << "glewInit() gave error " << ss.str() << std::endl;
-		return 0;
+		return 1;
 	}
 
 	// glewInit generates an INVALID_ENUM error for some reason...
@@ -493,10 +522,10 @@ int main(int argc, char** argv)
 	catch(std::exception& e)
 	{
 		std::cerr << "Fatal exception: " << e.what() << std::endl;
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 
