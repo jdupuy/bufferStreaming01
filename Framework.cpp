@@ -280,8 +280,8 @@ GLvoid build_glsl_program( GLuint program,
 		glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
 		if(GL_FALSE == linkStatus)
 		{
-			GLchar logContent[256];
-			glGetProgramInfoLog(program, 256, NULL, logContent);
+			GLchar logContent[512];
+			glGetProgramInfoLog(program, 512, NULL, logContent);
 			throw _ProgramLinkFailException(srcfile, logContent);
 		}
 	}
