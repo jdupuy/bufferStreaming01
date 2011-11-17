@@ -1,49 +1,50 @@
-solution "TemplateGL"
+solution "OpenGL"
 	configurations {
-	"Debug"
---	"Release"
+	"debug",
+	"release"
 	}
 	platforms { "x64", "x32" }
 
 -- ---------------------------------------------------------
 -- Project 
-	project "demoGL"
+	project "bufferStreaming"
 		basedir "./"
 		language "C++"
 		location "./"
-		kind "ConsoleApp"
+		kind "ConsoleApp" -- Shouldn't this be in configuration section ?
 		files { "*.hpp", "*.cpp" }
-		flags "Symbols"
 		includedirs {
 		"include"
 		}
 		objdir "obj"
--- Linux x86
+
+-- Debug configurations
+		configuration {"debug"}
+			defines {"DEBUG"}
+			flags {"Symbols", "ExtraWarnings"}
+
+-- Release configurations
+		configuration {"release"}
+			defines {"NDEBUG"}
+			flags {"Optimize"}
+
+-- Linux x86 platform gmake
 		configuration {"linux", "gmake", "x32"}
 			linkoptions {
-			"-Wl,-rpath -Wl,./lib/linux/lin32",
+			"-Wl,-rpath,./lib/linux/lin32 -L./lib/linux/lin32 -lGLEW -lglut -lAntTweakBar"
 			}
 			libdirs {
 			"lib/linux/lin32"
 			}
-			links {
-			"GLEW",
-			"glut",
-			"AntTweakBar"
-			}
 
--- Linux x64
+-- Linux x64 platform gmake
 		configuration {"linux", "gmake", "x64"}
 			linkoptions {
-			"-Wl,-rpath -Wl,./lib/linux/lin64"
+			"-Wl,-rpath,.",
+			"-Wl,-rpath,./lib/linux/lin64 -L./lib/linux/lin64 -lGLEW -lglut -lAntTweakBar"
 			}
 			libdirs {
 			"lib/linux/lin64"
-			}
-			links {
-			"GLEW",
-			"glut",
-			"AntTweakBar"
 			}
 
 -- Visual x86
@@ -54,8 +55,8 @@ solution "TemplateGL"
 			links {
 			"glew32s",
 			"freeglut",
+			"AntTweakBar"
 			}
-			objdir "obj"
 
 ---- Visual x64
 --		configuration {"vs2010", "x64"}
@@ -66,6 +67,5 @@ solution "TemplateGL"
 --			libdirs {
 --			"lib/windows/win64"
 --			}
---			objdir "obj"
 
 

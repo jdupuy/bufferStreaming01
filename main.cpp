@@ -114,7 +114,7 @@ void on_init()
 
 	// gen names
 	glGenBuffers(BUFFER_COUNT, buffers);
-	glGenVertexArrays(BUFFER_COUNT, vertexArrays);
+	glGenVertexArrays(VERTEX_ARRAY_COUNT, vertexArrays);
 	glGenTextures(TEXTURE_COUNT, textures);
 	for(GLuint i=0; i<PROGRAM_COUNT;++i)
 		programs[i] = glCreateProgram();
@@ -255,7 +255,7 @@ void on_clean()
 
 	// delete objects
 	glDeleteBuffers(BUFFER_COUNT, buffers);
-	glDeleteVertexArrays(BUFFER_COUNT, vertexArrays);
+	glDeleteVertexArrays(VERTEX_ARRAY_COUNT, vertexArrays);
 	glDeleteTextures(TEXTURE_COUNT, textures);
 	for(GLuint i=0; i<PROGRAM_COUNT;++i)
 		glDeleteProgram(programs[i]);
