@@ -51,6 +51,30 @@ namespace fw
 	                             GLsizei height) throw(FWException);
 
 
+	// Pack four floats in an unsigned integer
+	// Floats are clamped in range [0,1]
+	// (follows GL4.2 specs)
+	GLuint pack_4f_to_uint_10_10_10_2(GLfloat x,
+	                                  GLfloat y,
+	                                  GLfloat z,
+	                                  GLfloat w);
+	GLuint pack_4fv_to_uint_10_10_10_2(const GLfloat *v);
+
+	// Pack four floats in a signed integer
+	// Floats are clamped in range [-1,1]
+	// (follows GL4.2 specs)
+	GLint pack_4f_to_int_10_10_10_2(GLfloat x,
+	                                GLfloat y,
+	                                GLfloat z,
+	                                GLfloat w);
+	GLint pack_4fv_to_int_10_10_10_2(const GLfloat *v);
+
+
+	// Half to float conversion
+	GLhalf float_to_half(GLfloat f);
+	GLfloat half_to_float(GLhalf h);
+
+
 	// Basic timer class
 	class Timer
 	{
