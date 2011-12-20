@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <stdexcept>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +84,6 @@ double framesPerSecond = 0.0; // fps
 static void TW_CALL play_next_animation(void *data)
 {
 	md2->NextAnimation();
-//	activeAnimation = md2->ActiveAnimationName();
 }
 
 static void TW_CALL toggle_fullscreen(void *data)
@@ -107,7 +107,7 @@ static void TW_CALL play_pause(void* data)
 void on_init()
 {
 	// load Md2 model
-	md2 = new Md2("knight.md2");
+	md2 = new Md2("droid.md2");
 
 	// alloc names
 	buffers      = new GLuint[BUFFER_COUNT];
@@ -123,7 +123,7 @@ void on_init()
 		programs[i] = glCreateProgram();
 
 	// configure texture
-	fw::Tga tga("knight.tga");
+	fw::Tga tga("droid.tga");
 	glActiveTexture(GL_TEXTURE0+TEXTURE_SKIN_MD2);
 	glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_SKIN_MD2]);
 		glTexParameteri( GL_TEXTURE_2D,
@@ -209,7 +209,7 @@ void on_init()
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	glClearColor(0.0,0.0,0.0,1.0);
+	glClearColor(0.13,0.13,0.15,1.0);
 
 #ifdef _ANT_ENABLE
 	// start ant
@@ -309,9 +309,9 @@ void on_update()
 
 	// stream vertices (if necessary)
 	static GLuint streamOffset = 0;
-	GLuint drawOffset = streamOffset/sizeof(Md2::Vertex);
-//	if(md2->IsPlaying())
-//	{
+	static GLuint drawOffset   = 0;
+	if(md2->IsPlaying())
+	{
 		// bind the buffer
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
 		// orphan the buffer if full
@@ -333,9 +333,8 @@ void on_update()
 				glVertexAttribPointer( 2, 2, GL_FLOAT, 0, sizeof(Md2::Vertex),
 				                       FW_BUFFER_OFFSET(6*sizeof(GLfloat)));
 			glBindVertexArray(0);
-			// reset offsets
+			// reset offset
 			streamOffset = 0;
-			drawOffset = 0;
 		}
 
 		// get memory safely
@@ -346,6 +345,10 @@ void on_update()
 		                                          GL_MAP_WRITE_BIT
 		                                          |GL_MAP_UNSYNCHRONIZED_BIT));
 
+		// make sure memory is mapped
+		if(NULL == vertices)
+			throw std::runtime_error("Failed to map buffer.");
+
 		// set final data
 		md2->GenVertices(vertices);
 
@@ -353,9 +356,12 @@ void on_update()
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+		// compute draw offset
+		drawOffset = streamOffset/sizeof(Md2::Vertex);
+
 		// increment offset
 		streamOffset += streamDataSize;
-//	}
+	}
 
 #ifdef _ANT_ENABLE
 	// End bench
@@ -366,19 +372,13 @@ void on_update()
 	// update transformations
 	projection.FitHeightToAspect(float(windowWidth)/float(windowHeight));
 
-	Matrix4x4 mv = model.ExtractTransformMatrix()
-	             * Matrix4x4(0,1,0,0,
-	                         0,0,-1,0,
-	                         1,0,0,0,
-	                         0,0,0,1);
-	Matrix4x4 mvp = projection.ExtractTransformMatrix() * mv;
+	Matrix4x4 mvp = projection.ExtractTransformMatrix()
+	              * model.ExtractTransformMatrix()
+	              * Matrix4x4(0, 1, 0, 0,
+	                          0, 0,-1, 0,
+	                          1, 0, 0, 0,
+	                          0, 0, 0, 1);
 
-	glProgramUniformMatrix4fv(programs[PROGRAM_RENDER_MD2],
-	                          glGetUniformLocation(programs[PROGRAM_RENDER_MD2],
-	                                         "uModelView"),
-	                          1,
-	                          0,
-	                          reinterpret_cast<float*>(&mv));
 	glProgramUniformMatrix4fv(programs[PROGRAM_RENDER_MD2],
 	                          glGetUniformLocation(programs[PROGRAM_RENDER_MD2],
 	                                         "uModelViewProjection"),
@@ -457,8 +457,8 @@ void on_mouse_button(GLint button, GLint state, GLint x, GLint y)
 	}
 	else
 	{
-		mouseLeft  &= button == GLUT_LEFT_BUTTON ? false : mouseLeft;
-		mouseRight  &= button == GLUT_RIGHT_BUTTON ? false : mouseRight;
+		mouseLeft  &= button == GLUT_LEFT_BUTTON  ? false : mouseLeft;
+		mouseRight &= button == GLUT_RIGHT_BUTTON ? false : mouseRight;
 	}
 	if(button == 3)
 		model.TranslateWorld(Vector3(0,0,1.0f));
@@ -510,7 +510,7 @@ void on_mouse_wheel(GLint wheel, GLint direction, GLint x, GLint y)
 int main(int argc, char** argv)
 {
 	const GLuint CONTEXT_MAJOR = 4;
-	const GLuint CONTEXT_MINOR = 1;
+	const GLuint CONTEXT_MINOR = 2;
 
 	// init glut
 	glutInit(&argc, argv);

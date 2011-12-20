@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<Filter Include="core">
+			<UniqueIdentifier>{B0C3F535-387D-9AD6-528A-8677D71837B7}</UniqueIdentifier>
+		</Filter>
+	</ItemGroup>
+	<ItemGroup>
+		<ClInclude Include="glew.hpp" />
+		<ClInclude Include="Framework.hpp" />
+		<ClInclude Include="Md2.hpp" />
+	</ItemGroup>
+	<ItemGroup>
+		<ClCompile Include="Md2.cpp" />
+		<ClCompile Include="main.cpp" />
+		<ClCompile Include="Framework.cpp" />
+		<ClCompile Include="core\Vector2.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+		<ClCompile Include="core\Vector3.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+		<ClCompile Include="core\Matrix2x2.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+		<ClCompile Include="core\Affine.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+		<ClCompile Include="core\Projection.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+		<ClCompile Include="core\Matrix3x3.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+		<ClCompile Include="core\Matrix4x4.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+		<ClCompile Include="core\Vector4.cpp">
+			<Filter>core</Filter>
+		</ClCompile>
+	</ItemGroup>
+</Project>
