@@ -485,8 +485,8 @@ void on_mouse_motion(GLint x, GLint y)
 
 	if(mouseLeft)
 	{
-		model.RotateAboutLocalX(-0.01f*MOUSE_YREL);
-		model.RotateAboutWorldY(-0.01f*MOUSE_XREL);
+		model.RotateAboutWorldX(-0.01f*MOUSE_YREL);
+		model.RotateAboutLocalY(-0.01f*MOUSE_XREL);
 	}
 
 }
