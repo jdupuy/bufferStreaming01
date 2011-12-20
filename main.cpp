@@ -500,6 +500,7 @@ void on_mouse_wheel(GLint wheel, GLint direction, GLint x, GLint y)
 	if(1 == TwMouseWheel(wheel))
 		return;
 #endif // _ANT_ENABLE
+	model.TranslateWorld(Vector3(0,0,direction));
 }
 
 

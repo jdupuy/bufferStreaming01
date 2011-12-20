@@ -5,8 +5,10 @@
 #include <cstring> // memcpy
 #include <sstream> // std::stringstream
 #include <iostream> // std::cerr
+#include <algorithm> // std::min std::max
 
 #ifdef _WIN32
+#	define NOMINMAX
 #	include <windows.h>
 #	include <winbase.h>
 #else
