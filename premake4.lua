@@ -13,8 +13,10 @@ solution "OpenGL"
 		location "./"
 		kind "ConsoleApp" -- Shouldn't this be in configuration section ?
 		files { "*.hpp", "*.cpp" }
+		files { "core/*.cpp" }
 		includedirs {
-		"include"
+		"include",
+		"core"
 		}
 		objdir "obj"
 

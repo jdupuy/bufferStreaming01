@@ -15,7 +15,8 @@
 #endif // _ANT_ENABLE
 
 // Custom libraries
-#include "gmath.hpp"        // basic math library
+#include "Algebra.hpp"      // Basic algebra library
+#include "Transform.hpp"    // Basic transformations
 #include "Framework.hpp"    // utility classes/functions
 #include "Md2.hpp"          // MD2 model loader/player
 
@@ -30,25 +31,25 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-// Frame object
-struct Frame
-{
-	vec3f translation;
-	vec3f rotation;
-};
-
 // Constants
-const GLsizei STREAM_BUFFER_CAPACITY = 8192*1024; // 8MBytes
+const GLuint STREAM_BUFFER_CAPACITY = 8192*1024; // 8MBytes
 enum // OpenGLNames
 {
 	// buffers
-	BUFFER_VERTEX_MD2 = 0, BUFFER_COUNT,
+	BUFFER_VERTEX_MD2 = 0,
+	BUFFER_COUNT,
+
 	// vertex arrays
-	VERTEX_ARRAY_MD2 = 0, VERTEX_ARRAY_COUNT,
+	VERTEX_ARRAY_MD2 = 0,
+	VERTEX_ARRAY_COUNT,
+
 	// textures
-	TEXTURE_SKIN_MD2 = 0, TEXTURE_COUNT,
+	TEXTURE_SKIN_MD2 = 0,
+	TEXTURE_COUNT,
+
 	// programs
-	PROGRAM_RENDER_MD2 = 0, PROGRAM_COUNT
+	PROGRAM_RENDER_MD2 = 0,
+	PROGRAM_COUNT
 };
 
 // OpenGL objects
@@ -58,9 +59,13 @@ GLuint *textures     = NULL;
 GLuint *programs     = NULL;
 
 // Resources
-// md2 model and texture
-Md2* md2 = NULL;
-Frame frameMd2;
+Md2* md2 = NULL; // md2 model and texture
+
+// Tools
+Affine model          = Affine::Translation(Vector3(0,0,-400));
+Projection projection = Projection::Perspective(50.0f, 1.0f, 10.0f, 4000.0f);
+bool mouseLeft  = false;
+bool mouseRight = false;
 
 #ifdef _ANT_ENABLE
 std::string activeAnimation;  // active animation name
@@ -103,8 +108,6 @@ void on_init()
 {
 	// load Md2 model
 	md2 = new Md2("knight.md2");
-	frameMd2.translation = vec3f(-50,0,0);
-	frameMd2.rotation    = vec3f(0,0,0);
 
 	// alloc names
 	buffers      = new GLuint[BUFFER_COUNT];
@@ -205,6 +208,7 @@ void on_init()
 	                    TEXTURE_SKIN_MD2 );
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 	glClearColor(0.0,0.0,0.0,1.0);
 
 #ifdef _ANT_ENABLE
@@ -302,6 +306,7 @@ void on_update()
 	// Compute fps
 	framesPerSecond = 1.0/deltaTimer.Ticks();
 #endif // _ANT_ENABLE
+
 	// stream vertices (if necessary)
 	static GLuint streamOffset = 0;
 	GLuint drawOffset = streamOffset/sizeof(Md2::Vertex);
@@ -309,7 +314,7 @@ void on_update()
 //	{
 		// bind the buffer
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_VERTEX_MD2]);
-		// orphan if full
+		// orphan the buffer if full
 		GLuint streamDataSize = fw::next_power_of_two(md2->TriangleCount()
 		                                              *3*sizeof(Md2::Vertex));
 		if(streamOffset + streamDataSize > STREAM_BUFFER_CAPACITY)
@@ -358,29 +363,31 @@ void on_update()
 	streamingTime = streamTimer.Ticks()*1000.0; // convert to milliseconds
 #endif // _ANT_ENABLE
 
+	// update transformations
+	projection.FitHeightToAspect(float(windowWidth)/float(windowHeight));
+
+	Matrix4x4 mv = model.ExtractTransformMatrix()
+	             * Matrix4x4(0,1,0,0,
+	                         0,0,-1,0,
+	                         1,0,0,0,
+	                         0,0,0,1);
+	Matrix4x4 mvp = projection.ExtractTransformMatrix() * mv;
+
+	glProgramUniformMatrix4fv(programs[PROGRAM_RENDER_MD2],
+	                          glGetUniformLocation(programs[PROGRAM_RENDER_MD2],
+	                                         "uModelView"),
+	                          1,
+	                          0,
+	                          reinterpret_cast<float*>(&mv));
+	glProgramUniformMatrix4fv(programs[PROGRAM_RENDER_MD2],
+	                          glGetUniformLocation(programs[PROGRAM_RENDER_MD2],
+	                                         "uModelViewProjection"),
+	                          1,
+	                          0,
+	                          reinterpret_cast<float*>(&mvp));
 
 	// render the model
 	glUseProgram(programs[PROGRAM_RENDER_MD2]);
-	// build and upload mvp
-	mat4f projection = perspective( 80.0f,
-	                                float(windowWidth)/windowHeight,
-	                                0.01f,
-	                                1000.0f);
-	mat4f model      = mat4f(0,1,0,frameMd2.translation.y,
-	                         0,0,1,frameMd2.translation.z,
-	                         1,0,0,frameMd2.translation.x,
-	                         0,0,0,1);
-	mat3f faxis = rotatey(frameMd2.rotation.y) * rotatez(frameMd2.rotation.z);
-	model *= mat4f( faxis[0][0], faxis[1][0], faxis[2][0], 0,
-	                faxis[0][1], faxis[1][1], faxis[2][1], 0,
-	                faxis[0][2], faxis[1][2], faxis[2][2], 0,
-	                0, 0, 0, 1 );
-	mat4f modelViewProjection = projection * model;
-
-	static GLint mvpLocation = glGetUniformLocation(programs[PROGRAM_RENDER_MD2],
-	                                         "uModelViewProjection");
-	glUniformMatrix4fv(mvpLocation, 1, 0, &modelViewProjection[0][0]);
-
 	glBindVertexArray(vertexArrays[VERTEX_ARRAY_MD2]);
 	glDrawArrays( GL_TRIANGLES,
 	              drawOffset,
@@ -417,6 +424,10 @@ void on_resize(GLint w, GLint h)
 // on key down cb
 void on_key_down(GLubyte key, GLint x, GLint y)
 {
+#ifdef _ANT_ENABLE
+	if(1==TwEventKeyboardGLUT(key, x, y))
+		return;
+#endif
 	if (key==27) // escape
 		glutLeaveMainLoop();
 	if(key=='f')
@@ -438,6 +449,21 @@ void on_mouse_button(GLint button, GLint state, GLint x, GLint y)
 	if(1 == TwEventMouseButtonGLUT(button, state, x, y))
 		return;
 #endif // _ANT_ENABLE
+
+	if(state==GLUT_DOWN)
+	{
+		mouseLeft  |= button == GLUT_LEFT_BUTTON;
+		mouseRight |= button == GLUT_RIGHT_BUTTON;
+	}
+	else
+	{
+		mouseLeft  &= button == GLUT_LEFT_BUTTON ? false : mouseLeft;
+		mouseRight  &= button == GLUT_RIGHT_BUTTON ? false : mouseRight;
+	}
+	if(button == 3)
+		model.TranslateWorld(Vector3(0,0,1.0f));
+	if(button == 4)
+		model.TranslateWorld(Vector3(0,0,-1.0f));
 }
 
 
@@ -449,6 +475,20 @@ void on_mouse_motion(GLint x, GLint y)
 	if(1 == TwEventMouseMotionGLUT(x,y))
 		return;
 #endif // _ANT_ENABLE
+
+	static GLint sMousePreviousX = 0;
+	static GLint sMousePreviousY = 0;
+	const GLint MOUSE_XREL = x-sMousePreviousX;
+	const GLint MOUSE_YREL = y-sMousePreviousY;
+	sMousePreviousX = x;
+	sMousePreviousY = y;
+
+	if(mouseLeft)
+	{
+		model.RotateAboutLocalX(-0.01f*MOUSE_YREL);
+		model.RotateAboutWorldY(-0.01f*MOUSE_XREL);
+	}
+
 }
 
 
@@ -527,6 +567,4 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-
 

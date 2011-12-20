@@ -9,13 +9,14 @@ layout(location=2)  in vec2 iTexCoord;
 layout(location=0)  out vec3 oNormal;
 layout(location=1)  out vec2 oTexCoord;
 
+uniform mat4 uModelView;
 uniform mat4 uModelViewProjection;
 
 void main()
 {
-	oNormal     = iNormal;
-	oTexCoord   = iTexCoord;
-	gl_Position = uModelViewProjection * vec4(iPosition, 1.0);
+	oNormal       = normalize((uModelView * vec4(iNormal,0.0)).xyz);
+	oTexCoord     = iTexCoord;
+	gl_Position   = uModelViewProjection * vec4(iPosition, 1.0);
 }
 
 #endif // _VERTEX_
