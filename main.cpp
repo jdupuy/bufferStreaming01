@@ -511,7 +511,7 @@ void on_mouse_wheel(GLint wheel, GLint direction, GLint x, GLint y)
 int main(int argc, char** argv)
 {
 	const GLuint CONTEXT_MAJOR = 4;
-	const GLuint CONTEXT_MINOR = 2;
+	const GLuint CONTEXT_MINOR = 1;
 
 	// init glut
 	glutInit(&argc, argv);
