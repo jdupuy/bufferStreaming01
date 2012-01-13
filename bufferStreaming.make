@@ -112,13 +112,13 @@ OBJECTS := \
 	$(OBJDIR)/main.o \
 	$(OBJDIR)/Framework.o \
 	$(OBJDIR)/Vector2.o \
-	$(OBJDIR)/Vector3.o \
-	$(OBJDIR)/Matrix2x2.o \
+	$(OBJDIR)/Vector4.o \
 	$(OBJDIR)/Affine.o \
 	$(OBJDIR)/Projection.o \
 	$(OBJDIR)/Matrix3x3.o \
+	$(OBJDIR)/Vector3.o \
+	$(OBJDIR)/Matrix2x2.o \
 	$(OBJDIR)/Matrix4x4.o \
-	$(OBJDIR)/Vector4.o \
 
 RESOURCES := \
 
@@ -191,10 +191,7 @@ $(OBJDIR)/Framework.o: Framework.cpp
 $(OBJDIR)/Vector2.o: core/Vector2.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/Vector3.o: core/Vector3.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/Matrix2x2.o: core/Matrix2x2.cpp
+$(OBJDIR)/Vector4.o: core/Vector4.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 $(OBJDIR)/Affine.o: core/Affine.cpp
@@ -206,10 +203,13 @@ $(OBJDIR)/Projection.o: core/Projection.cpp
 $(OBJDIR)/Matrix3x3.o: core/Matrix3x3.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/Matrix4x4.o: core/Matrix4x4.cpp
+$(OBJDIR)/Vector3.o: core/Vector3.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
-$(OBJDIR)/Vector4.o: core/Vector4.cpp
+$(OBJDIR)/Matrix2x2.o: core/Matrix2x2.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
+$(OBJDIR)/Matrix4x4.o: core/Matrix4x4.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 
