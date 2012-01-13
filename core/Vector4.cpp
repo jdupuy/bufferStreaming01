@@ -36,9 +36,9 @@ Vector4 Vector4::CompMin(const Vector4& u,
 Vector4 Vector4::CompMax(const Vector4& u,
                          const Vector4& v)
 { return Vector4(std::max(u[0],v[0]),
-                 std::min(u[1],v[1]),
-                 std::min(u[2],v[2]),
-                 std::min(u[3],v[3])); }
+                 std::max(u[1],v[1]),
+                 std::max(u[2],v[2]),
+                 std::max(u[3],v[3])); }
 
 Vector4 Vector4::CompClamp(const Vector4& v,
                            const Vector4& min,

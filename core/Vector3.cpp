@@ -34,8 +34,8 @@ Vector3 Vector3::CompMin(const Vector3& u,
 Vector3 Vector3::CompMax(const Vector3& u,
                          const Vector3& v)
 { return Vector3(std::max(u[0],v[0]),
-                 std::min(u[1],v[1]),
-                 std::min(u[2],v[2])); }
+                 std::max(u[1],v[1]),
+                 std::max(u[2],v[2])); }
 
 Vector3 Vector3::CompClamp(const Vector3& v,
                            const Vector3& min,

@@ -32,7 +32,7 @@ Vector2 Vector2::CompMin(const Vector2& u,
 Vector2 Vector2::CompMax(const Vector2& u,
                          const Vector2& v)
 { return Vector2(std::max(u[0],v[0]),
-                 std::min(u[1],v[1])); }
+                 std::max(u[1],v[1])); }
 
 Vector2 Vector2::CompClamp(const Vector2& v,
                            const Vector2& min,
