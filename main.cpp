@@ -531,6 +531,7 @@ int main(int argc, char** argv)
 	glutCreateWindow("OpenGLBufferStreaming");
 
 	// init glew
+	glewExperimental = GL_TRUE; // segfault on GenVertexArrays on Nvidia otherwise
 	GLenum err = glewInit();
 	if(GLEW_OK != err)
 	{
