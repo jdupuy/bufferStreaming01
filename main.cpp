@@ -402,10 +402,9 @@ void on_update()
 
 	fw::check_gl_error();
 
+	glutSwapBuffers();
 	// restart timer
 	deltaTimer.Start();
-
-	glutSwapBuffers();
 	glutPostRedisplay();
 }
 
