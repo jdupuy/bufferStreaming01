@@ -338,7 +338,7 @@ Md2::~Md2() throw()
 	_Clear();
 }
 
-#include <iostream>
+
 ////////////////////////////////////////////////////////////////////////////////
 // Load from file
 void Md2::Load(const std::string& filename) throw (Md2Exception)
@@ -424,7 +424,6 @@ void Md2::Load(const std::string& filename) throw (Md2Exception)
 		                    sizeof(Md2::_Frame::Vertex)*mVertexCnt);
 	}
 
-
 	// done
 	fileStream.close();
 }
@@ -467,7 +466,7 @@ void Md2::PreviousAnimation()
 	mActiveFrame = sAnimations[mActiveAnimation].start;
 }
 
-
+#include <iostream>
 ////////////////////////////////////////////////////////////////////////////////
 // Update
 void Md2::Update(float dt)
@@ -477,21 +476,14 @@ void Md2::Update(float dt)
 		return;
 
 	// increment frame
-	mActiveFrame          += mSpeed*dt*sAnimations[mActiveAnimation].fps;
+	mActiveFrame+= mSpeed*dt*sAnimations[mActiveAnimation].fps;
 
-	// store frac part of frame
-	float frameFrac;
-	frameFrac       = std::modf(mActiveFrame, &mActiveFrame);
-
-	// loop animations
-	if(mActiveFrame > sAnimations[mActiveAnimation].end)
-		mActiveFrame  = (int16_t(mActiveFrame)
-		              - sAnimations[mActiveAnimation].start) 
-		              % sAnimations[mActiveAnimation].FrameCount()
-		              + sAnimations[mActiveAnimation].start;
-
-	// final active frame
-	mActiveFrame += frameFrac;
+	// loop animation
+	if(mActiveFrame >= sAnimations[mActiveAnimation].end)
+		mActiveFrame = std::modf(mActiveFrame, &mActiveFrame)
+		             + std::fmod(mActiveFrame-sAnimations[mActiveAnimation].start,
+		                         sAnimations[mActiveAnimation].FrameCount())
+		             + sAnimations[mActiveAnimation].start;
 }
 
 
